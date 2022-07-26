@@ -71,7 +71,7 @@ async function enableLdap(config) {
           delete profile.jpegPhoto;
           appLog.debug(profile, 'Found LDAP profile');
 
-          const profileUsername = profile.uid || profile.sAMAccountName;
+          const profileUsername = profile[config.get('ldapAttributeForSqlpadUsername')] || profile.uid || profile.sAMAccountName;
 
           if (!profileUsername) {
             appLog.warn(

@@ -195,6 +195,10 @@ const configItems = [
     default: '',
   },
   {
+    key: 'ldapAttributeForSqlpadUsername',
+    envVar: 'SQLPAD_LDAP_PROFILE_USERNAME_ATTRIBUTE'
+  },
+  {
     key: 'serviceTokenSecret',
     envVar: 'SQLPAD_SERVICE_TOKEN_SECRET',
     default: '',
