@@ -276,6 +276,9 @@ SQLPAD_LDAP_ROLE_ADMIN_FILTER = ""
 # LDAP filter used to determine if a user should be assigned SQLPad editor role
 SQLPAD_LDAP_ROLE_EDITOR_FILTER = ""
 
+# LDAP attribute whose value will be used as the SQLPad username, failing over to `sAMAccountName` then `uid` if the attribute value is empty.
+SQLPAD_LDAP_PROFILE_USERNAME_ATTRIBUTE = ""
+
 # Default role for users that do not match LDAP role filters. May be either `admin`, `editor`, `denied`, or empty.
 # If `denied` or empty, a user _must_ match an LDAP role filter to be admitted into SQLPad, unless they are previously created as a SQLPad user in advanced.
 SQLPAD_LDAP_DEFAULT_ROLE = ""

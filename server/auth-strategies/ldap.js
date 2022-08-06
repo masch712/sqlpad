@@ -13,6 +13,7 @@ async function enableLdap(config) {
   const searchBase = config.get('ldapSearchBase');
   const adminRoleFilter = config.get('ldapRoleAdminFilter');
   const editorRoleFilter = config.get('ldapRoleEditorFilter');
+  const usernameAttribute = config.get('ldapAttributeForSqlpadUsername');
 
   // Derive what the ldapDefaultRole should be from config
   // Value in config could be `editor`, `admin`, `denied` or empty string
@@ -71,7 +72,7 @@ async function enableLdap(config) {
           delete profile.jpegPhoto;
           appLog.debug(profile, 'Found LDAP profile');
 
-          const profileUsername = profile[config.get('ldapAttributeForSqlpadUsername')] || profile.uid || profile.sAMAccountName;
+          const profileUsername = (usernameAttribute && profile[usernameAttribute]) || profile.uid || profile.sAMAccountName;
 
           if (!profileUsername) {
             appLog.warn(
@@ -86,7 +87,9 @@ async function enableLdap(config) {
           // Derive a userId fiter based on profile that is found
           // ActiveDirectory will have sAMAccountName, while OpenLDAP will have uid
           let userIdFilter = '';
-          if (profile.sAMAccountName) {
+          if (usernameAttribute && profile[usernameAttribute]) {
+            userIdFilter = `(${usernameAttribute}=${profile[usernameAttribute]})`;
+          } else if (profile.sAMAccountName) {
             userIdFilter = `(sAMAccountName=${profile.sAMAccountName})`;
           } else if (profile.uid) {
             userIdFilter = `(uid=${profile.uid})`;
