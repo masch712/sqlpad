@@ -4,6 +4,8 @@ const ConnectionClients = require('./connection-clients');
 const Connections = require('./connections');
 const Queries = require('./queries');
 const QueryHistory = require('./query-history');
+const RoleLdapGroupMappings = require('./role-ldap-group-mappings');
+const Roles = require('./roles');
 const SchemaInfo = require('./schema-info');
 const ServiceTokens = require('./service-tokens');
 const Statements = require('./statements');
@@ -42,6 +44,8 @@ class Models {
     this.statements = new Statements(sequelizeDb, config);
     this.tags = new Tags(sequelizeDb, config);
     this.users = new Users(sequelizeDb, config);
+    this.roles = new Roles(sequelizeDb, config);
+    this.roleLdapGroupMappings = new RoleLdapGroupMappings(sequelizeDb, config);
   }
 }
 

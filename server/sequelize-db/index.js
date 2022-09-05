@@ -45,6 +45,10 @@ class SequelizeDb {
     this.Batches = require('./batches')(sequelize);
     this.Statements = require('./statements')(sequelize);
     this.Sessions = require('./sessions')(sequelize);
+    this.Roles = require('./roles')(sequelize);
+    this.RoleLdapGroupMappings = require('./role-ldap-group-mappings')(
+      sequelize
+    );
   }
 }
 

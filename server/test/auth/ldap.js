@@ -19,6 +19,46 @@ describe('auth/ldap', function () {
     }
   });
 
+  it.only('Auto sign up creates user with mapped roles from config', async function () {
+    const utils = new TestUtil({
+      ldapAuthEnabled: true,
+      ldapAutoSignUp: true,
+      ldapDefaultRole: 'editor',
+      ldapUrl: 'ldap://localhost:10389',
+      ldapBindDN: 'cn=admin,dc=planetexpress,dc=com',
+      ldapPassword: 'GoodNewsEveryone',
+      ldapSearchFilter: '(uid={{username}})',
+      ldapSearchBase: 'dc=planetexpress,dc=com',
+      ldapRoleAdminFilter: '',
+      ldapRoleEditorFilter: '',
+    });
+
+    await utils.init();
+
+    const sqlpad_role = await utils.models.roles.create({
+      name: 'db1_readonly',
+    });
+
+    await utils.models.roleLdapGroupMappings.create({
+      ldapGroup: 'db1_readonly',
+      roleId: sqlpad_role.id,
+    });
+
+    const agent = request.agent(utils.app);
+
+    await agent
+      .post('/api/signin')
+      .send({
+        password: 'hermes',
+        email: 'hermes',
+      })
+      .expect(200);
+
+    const r2 = await agent.get('/api/app');
+    assert.equal(r2.body.currentUser.email, 'hermes@planetexpress.com');
+    assert.equal(r2.body.currentUser.roles, 'editor');
+  });
+
   it('Auto sign up creates user w/default role editor', async function () {
     const utils = new TestUtil({
       ldapAuthEnabled: true,
