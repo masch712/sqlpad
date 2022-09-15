@@ -2,6 +2,7 @@ const assert = require('assert');
 const request = require('supertest');
 const TestUtil = require('../utils');
 const ldapUtils = require('../../lib/ldap-utils');
+const { fail } = require('assert');
 
 describe('auth/ldap', function () {
   before(async function () {
@@ -19,7 +20,65 @@ describe('auth/ldap', function () {
     }
   });
 
-  it.only('Auto sign up creates user with mapped roles from config', async function () {
+  it('ldap container supports memberOf', async function () {
+    const utils = new TestUtil({
+      ldapAuthEnabled: true,
+      ldapAutoSignUp: true,
+      ldapDefaultRole: 'editor',
+      ldapUrl: 'ldap://localhost:10389',
+      ldapBindDN: 'cn=admin,dc=planetexpress,dc=com',
+      ldapPassword: 'GoodNewsEveryone',
+      ldapSearchFilter: '(uid={{username}})',
+      ldapSearchBase: 'dc=planetexpress,dc=com',
+      ldapRoleAdminFilter: '',
+      ldapRoleEditorFilter: '',
+    });
+
+    await utils.init();
+
+    const ldap = ldapUtils.getClient(utils.config);
+    await ldapUtils.bindClient(
+      ldap,
+      utils.config.get('ldapBindDN'),
+      utils.config.get('ldapPassword')
+    );
+
+    const ldapSearchPromise = new Promise((resolve, reject) => {
+      ldap.search(
+        'cn=Bender Bending Rodríguez,ou=people,dc=planetexpress,dc=com',
+        {
+          attributes: '+',
+          filter: '(objectClass=inetOrgPerson)',
+          scope: 'sub',
+        },
+        (err, res) => {
+          if (err) {
+            reject(err);
+          }
+          const entries = [];
+          res.on('searchEntry', (entry) => {
+            entries.push(entry);
+          });
+          res.on('error', (err) => {
+            reject(err);
+          });
+          res.on('end', () => {
+            resolve(entries);
+          });
+        }
+      );
+    });
+
+    const ldapSearchResults = await ldapSearchPromise;
+
+    assert.equal(ldapSearchResults.length, 1);
+    assert.equal(
+      ldapSearchResults[0].object.memberOf,
+      'cn=ship_crew,ou=people,dc=planetexpress,dc=com'
+    );
+  });
+
+  it('Existing user gets roles mapped from LDAP groups', async function () {
     const utils = new TestUtil({
       ldapAuthEnabled: true,
       ldapAutoSignUp: true,
@@ -40,7 +99,7 @@ describe('auth/ldap', function () {
     });
 
     await utils.models.roleLdapGroupMappings.create({
-      ldapGroup: 'db1_readonly',
+      ldapGroup: 'admin_staff', // this group comes with the ldap docker image: https://github.com/rroemhild/docker-test-openldap
       roleId: sqlpad_role.id,
     });
 
@@ -55,8 +114,11 @@ describe('auth/ldap', function () {
       .expect(200);
 
     const r2 = await agent.get('/api/app');
+
+    // TODO: figure out how to enable memberOf overlay? https://tylersguides.com/guides/openldap-memberof-overlay/#configuration_tag
+
     assert.equal(r2.body.currentUser.email, 'hermes@planetexpress.com');
-    assert.equal(r2.body.currentUser.roles, 'editor');
+    assert.equal(r2.body.currentUser.roles, [sqlpad_role]);
   });
 
   it('Auto sign up creates user w/default role editor', async function () {
