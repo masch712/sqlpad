@@ -107,14 +107,14 @@ async function enableLdap(config) {
 
           // Create a variable to keep track if role is set by RBAC
           // If it is, update role later on if user is found and current role doesn't match
-          let roleSetByRBAC = false;
+          let roleSetByLegacyRBAC = false;
 
           // If admin or editor role filters are specified, open a connection to LDAP server and run additional queries
           // Try to find a role by running searches with a restriction on user that was found
           // Searches should start with most priveleged, then progress onward
           // If a row is returned, the user can be assigned that role and no other queries are needed
           if (adminRoleFilter || editorRoleFilter) {
-            roleSetByRBAC = true;
+            roleSetByLegacyRBAC = true;
 
             // Establish LDAP client to make additional queries
             const client = ldapUtils.getClient(config);
@@ -164,6 +164,22 @@ async function enableLdap(config) {
             }
           }
 
+          // If the role hasn't been set yet, try LDAP group-based RBAC
+          // TODO: do this first (and exclusively) if SQLPAD_LDAP_RBAC enabled?
+          if (!role) {
+            // Establish LDAP client to make additional queries
+            const client = ldapUtils.getClient(config);
+
+            await ldapUtils.bindClient(client, bindDN, bindCredentials);
+            const userLdapEntry = await ldapUtils.queryLdap(
+              client,
+              searchBase,
+              'sub',
+              userIdFilter,
+              ['+']
+            );
+          }
+
           // Find user. Try email first, then ldapId (username) as a fallback
           // Email might not have been populated
           let user;
@@ -187,7 +203,7 @@ async function enableLdap(config) {
 
             // If a role was set by RBAC and user already exists, but role doesn't match, update it
             if (
-              roleSetByRBAC &&
+              roleSetByLegacyRBAC &&
               role &&
               user.syncAuthRole &&
               user.role !== role

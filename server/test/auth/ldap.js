@@ -43,37 +43,17 @@ describe('auth/ldap', function () {
       utils.config.get('ldapPassword')
     );
 
-    const ldapSearchPromise = new Promise((resolve, reject) => {
-      ldap.search(
-        'cn=Bender Bending Rodríguez,ou=people,dc=planetexpress,dc=com',
-        {
-          attributes: '+',
-          filter: '(objectClass=inetOrgPerson)',
-          scope: 'sub',
-        },
-        (err, res) => {
-          if (err) {
-            reject(err);
-          }
-          const entries = [];
-          res.on('searchEntry', (entry) => {
-            entries.push(entry);
-          });
-          res.on('error', (err) => {
-            reject(err);
-          });
-          res.on('end', () => {
-            resolve(entries);
-          });
-        }
-      );
-    });
-
-    const ldapSearchResults = await ldapSearchPromise;
+    const ldapSearchResults = await ldapUtils.queryLdap(
+      ldap,
+      'cn=Bender Bending Rodríguez,ou=people,dc=planetexpress,dc=com',
+      'sub',
+      '(objectClass=inetOrgPerson)',
+      ['+']
+    );
 
     assert.equal(ldapSearchResults.length, 1);
     assert.equal(
-      ldapSearchResults[0].object.memberOf,
+      ldapSearchResults[0].memberOf,
       'cn=ship_crew,ou=people,dc=planetexpress,dc=com'
     );
   });

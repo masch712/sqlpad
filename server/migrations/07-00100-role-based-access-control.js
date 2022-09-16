@@ -84,15 +84,11 @@ async function up(queryInterface, config, appLog, sequelizeDb) {
       }
     );
 
-    await queryInterface.addOrReplaceIndex(
-      queryInterface,
-      'roles',
-      'roles_name',
-      ['name'],
-      {
-        unique: true,
-      }
-    );
+    await queryInterface.addIndex('roles', {
+      fields: ['name'],
+      name: 'roles_name',
+      unique: true,
+    });
   } catch (error) {
     appLog.error(error, `Error in role-based access control migration`);
   }

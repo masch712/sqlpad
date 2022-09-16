@@ -9,10 +9,11 @@
       "request": "launch",
       "name": "Mocha Current File",
       "program": "${workspaceFolder}/server/node_modules/mocha/bin/_mocha",
-      "args": ["--timeout", "999999", "--colors", "${file}"],
+      "args": ["--timeout", "999999", "--colors", "${file}", "--exit"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "skipFiles": ["<node_internals>/**/*.js"]
+      "skipFiles": ["<node_internals>/**/*.js"],
+      "runtimeVersion": "14"
     }
   ]
 }

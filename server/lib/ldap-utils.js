@@ -84,11 +84,13 @@ async function ldapCanBind(config) {
  * @param {string} searchBase
  * @param {string} scope - base or sub
  * @param {string} filter - ldap query string
+ * @param {string[]} attributes - ldap attributes to retrieve.  Include '+' to return operational attributes like memberOf.
  */
-function queryLdap(client, searchBase, scope, filter) {
+function queryLdap(client, searchBase, scope, filter, attributes = []) {
   const opts = {
     scope,
     filter,
+    attributes,
   };
 
   appLog.debug(opts, `Running LDAP search with searchBase ${searchBase}`);
